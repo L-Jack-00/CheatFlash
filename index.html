@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>치트 플래시 (Cheat Flash) v1.0.0 - 플래시 치트 & 스피드핵 런타임</title>
+  
+  <!-- Step 1: Virtual Clock Rig installed before Ruffle initialization -->
+  <script src="virtual_clock.js"></script>
+
+  <!-- Step 2: Ruffle Official WebAssembly Engine -->
+  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+
+  <!-- Linked Retro Stylesheet with Cache Busting -->
+  <link rel="stylesheet" href="style.css?v=2.2.0">
+
+</head>
+<body>
+
+  <!-- Flash Player Authentic Right-Click Context Menu -->
+  <div class="retro-context-menu" id="flash-context-menu" style="display: none; position: fixed; z-index: 10000;">
+    <div class="context-menu-item" onclick="Harness.toggleToolbarCheckbox()">
+      <input type="checkbox" id="flash-ctx-chk-toolbar" checked style="cursor: pointer;" onclick="event.stopPropagation(); Harness.toggleToolbar(this.checked); Harness.hideFlashContextMenu(); Harness.hideContextMenu();">
+      <label for="flash-ctx-chk-toolbar" style="cursor: pointer;">상단 툴바 표시 (T)</label>
+    </div>
+    <div class="context-menu-item" onclick="Harness.toggleUndockInspector()">
+      <span id="flash-ctx-label-undock">🗗 인스펙터 창 분리 (Undock)</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="Harness.flashZoom(1.25)">
+      <span>🔍 확대 (Zoom In)</span>
+    </div>
+    <div class="context-menu-item" onclick="Harness.flashZoom(0.8)">
+      <span>🔍 축소 (Zoom Out)</span>
+    </div>
+    <div class="context-menu-item" onclick="Harness.flashZoom(1.0)">
+      <span>100% 원래 크기 (100%)</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="Harness.togglePause()">
+      <span>▶ 재생 / 일시정지 (F1)</span>
+    </div>
+    <div class="context-menu-item" onclick="Harness.flashRewind()">
+      <span>⏮ 되감기 (Rewind)</span>
+    </div>
+    <div class="context-menu-item" onclick="Harness.stepFrame()">
+      <span>⏭ 1프레임 전진 (F4)</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="Harness.setFlashQuality('high')">
+      <span>품질: 높음 (High)</span>
+      <span id="chk-quality-high">✔</span>
+    </div>
+    <div class="context-menu-item" onclick="Harness.setFlashQuality('medium')">
+      <span>품질: 중간 (Medium)</span>
+      <span id="chk-quality-med" style="display:none;">✔</span>
+    </div>
+    <div class="context-menu-item" onclick="Harness.setFlashQuality('low')">
+      <span>품질: 낮음 (Low)</span>
+      <span id="chk-quality-low" style="display:none;">✔</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="Harness.toggleFullscreen()">
+      <span>⛶ 전체 화면 (Full Screen)</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="alert('Adobe Flash Player 9 (Ruffle Universal Runtime v2.0)\n\n안티치트 무력화 가드 및 가상 클록 가속 엔진이 정상 구동 중입니다.')">
+      <span>ℹ️ Adobe Flash Player 9 정보...</span>
+    </div>
+  </div>
+
+  <!-- App Shell Custom Context Menu (Toolbar / Frame Options) -->
+  <div class="retro-context-menu" id="retro-context-menu" style="display: none; position: fixed; z-index: 10000;">
+    <div class="context-menu-item" onclick="Harness.toggleToolbarCheckbox()">
+      <input type="checkbox" id="ctx-chk-toolbar" checked style="cursor: pointer;" onclick="event.stopPropagation(); Harness.toggleToolbar(this.checked);">
+      <label for="ctx-chk-toolbar" style="cursor: pointer;">상단 툴바 표시 (T)</label>
+    </div>
+    <div class="context-menu-item" onclick="Harness.toggleUndockInspector()">
+      <span id="ctx-label-undock">🗗 인스펙터 창 분리 (Undock)</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="Harness.togglePause()">
+      <span>⏸ 일시정지 / 재개 (F1)</span>
+    </div>
+    <div class="context-menu-item" onclick="Harness.setSpeed(1.0)">
+      <span>⚡ 정상 배속 1.0x (F5)</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="document.getElementById('file-input').click()">
+      <span>📁 플래시 열기 (.SWF)</span>
+    </div>
+  </div>
+
+  <!-- Classic WinXP/2000s Toolbar -->
+  <div class="classic-toolbar">
+    <input type="file" id="file-input" accept=".swf" style="display: none;" onchange="handleFileSelect(event)">
+    <button class="btn-classic btn-flash-primary" onclick="document.getElementById('file-input').click()">
+      📁 열기 (.SWF)
+    </button>
+    <button class="btn-classic" onclick="Harness.startSandboxDemo()">
+      🎯 레트로 데모
+    </button>
+
+    <label style="display: inline-flex; align-items: center; gap: 3px; font-size: 10px; margin-left: 2px; color: #0A246A; font-weight: bold; cursor: pointer; white-space: nowrap;" title="SWF 로드 시 바이트코드를 파싱하여 confereNDS 등 안티치트 검증 함수를 자동으로 무력화합니다.">
+      <input type="checkbox" id="auto-disarm-check" checked> 🛡️ 안티치트 무력화
+    </label>
+
+    <div class="separator"></div>
+
+    <!-- Smart Function Keys (F1 ~ F5) Controls -->
+    <button id="btn-pause" class="btn-classic" onclick="Harness.togglePause()">
+      ⏸ 일시정지 (F1)
+    </button>
+    <button class="btn-classic" onclick="Harness.setSpeed(0.5)">
+      ⏪ 0.5x
+    </button>
+    <button class="btn-classic" onclick="Harness.setSpeed(2.0)">
+      ⏩ 2x
+    </button>
+    <button class="btn-classic" onclick="Harness.stepFrame()">
+      ⏭ 1프레임
+    </button>
+    <button class="btn-classic" onclick="Harness.setSpeed(1.0)">
+      ⚡ 1x
+    </button>
+
+    <div class="separator"></div>
+
+    <div class="speed-control-group">
+      <span>배속:</span>
+      <input type="range" id="speed-slider" class="speed-slider" min="0.1" max="10.0" step="0.1" value="1.0" oninput="Harness.setSpeed(parseFloat(this.value))">
+      <span id="speed-label" class="speed-badge">1.00x</span>
+    </div>
+
+    <!-- Toolbar Folding Quick Button (Icon Only, Same Row) -->
+    <button class="btn-classic" style="margin-left: auto; padding: 2px 6px; font-size: 10px; min-width: 22px; justify-content: center;" onclick="Harness.toggleToolbar(false)" title="상단 툴바 접기 (우클릭 또는 상단 바에서 복원)">
+      ▲
+    </button>
+  </div>
+
+  <!-- Workspace Container: Flash Screen + Inspector Dock -->
+  <div class="workspace-container">
+    
+    <!-- Viewport Panel (Left/Center) -->
+    <div class="viewport-panel" id="viewport-container">
+      <div class="viewport-header" id="viewport-header">
+        <span id="current-game-title">Macromedia Flash Player - [Built-in Retro Demo Mode]</span>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <button class="btn-classic" id="btn-restore-toolbar" style="display:none; padding: 1px 5px; font-size: 10px; min-width: 22px; justify-content: center;" onclick="Harness.toggleToolbar(true)" title="상단 툴바 펼치기">▼</button>
+          <span id="game-status-badge" class="status-badge">Demo Active</span>
+        </div>
+      </div>
+
+      <div class="viewport-content" id="player-viewport">
+        <!-- Ruffle Player or Canvas Demo dynamically injected here -->
+      </div>
+
+      <!-- Drag & Drop Visual Overlay Zone -->
+      <div class="drop-overlay" id="drop-zone">
+        <div class="drop-icon">⚡ [Flash .SWF]</div>
+        <div style="font-size: 14px; font-weight: bold;">여기에 .SWF 플래시 파일을 드롭하면 즉시 실행됩니다!</div>
+        <div style="color: #aaa; margin-top: 4px;">가상 클록 훅 및 치트 하네스가 자동 마운트됩니다. (우클릭: 플래시 전체 메뉴 지원)</div>
+      </div>
+    </div>
+
+    <!-- Inspector Panel (Right) -->
+    <div class="inspector-panel" id="inspector-panel">
+      <div class="inspector-header" id="inspector-drag-handle" title="창 분리 버튼을 누르면 독립 윈도우 창으로 떨어져 화면 밖으로 이동할 수 있습니다">
+        <span>⚡ 치트 및 변수 인스펙터</span>
+        <button id="btn-undock" class="btn-classic" style="padding: 1px 6px; font-size: 10px;" onclick="Harness.toggleUndockInspector()">🗗 분리</button>
+      </div>
+
+      <!-- Inspector Tabs Header -->
+      <div class="inspector-tabs">
+        <button class="inspector-tab active btn-classic" id="tab-btn-scanner" onclick="Harness.switchTab('scanner')">🔍 메모리 검색기</button>
+        <button class="inspector-tab btn-classic" id="tab-btn-cheats" onclick="Harness.switchTab('cheats')">⚡ 게임 제어 & 치트</button>
+        <button class="inspector-tab btn-classic" id="tab-btn-logs" onclick="Harness.switchTab('logs')">📜 게임 정보 & 로그</button>
+      </div>
+
+      <div class="inspector-body">
+        
+        <!-- [TAB 1] 메모리 검색기 (Sub-Segment Switch: Delta Hunter vs Precision Scanner) -->
+        <div class="tab-page active" id="page-scanner" style="display: flex; flex-direction: column; flex: 1;">
+          
+          <!-- Mini Sub-Segment Switch Bar -->
+          <div class="sub-segment-bar">
+            <button class="btn-classic sub-segment-btn active" id="subseg-btn-hunter" onclick="Harness.switchScannerSubSegment('hunter')" title="수치 변동 감지 기반 초간편 치트 적중">
+              🎯 간편 델타 헌터 (추천)
+            </button>
+            <button class="btn-classic sub-segment-btn" id="subseg-btn-scanner" onclick="Harness.switchScannerSubSegment('scanner')" title="클래식 치트엔진 방식 정밀/미지수 스캔">
+              ⚙️ 클래식 정밀 스캐너
+            </button>
+          </div>
+
+          <!-- [Sub-Segment 1] Smart Delta Hunter Panel -->
+          <div class="sub-segment-panel" id="subseg-panel-hunter" style="display: flex;">
+            <div class="group-box" style="border: 2px solid #D32F2F; background: #FFFEEB; flex: 1; display: flex; flex-direction: column;">
+              <div class="group-title" style="background: #D32F2F; color: #FFF; padding: 1px 6px; border-radius: 2px;">
+                🎯 스마트 델타 헌터 (실시간 변동 감지 & 자동 적중)
+              </div>
+              
+              <!-- Step 1: Baseline Lock-on -->
+              <div style="margin-top: 6px; display: flex; gap: 4px; align-items: center;">
+                <span style="font-weight: bold; color: #0A246A; font-size: 10px; width: 48px;">1. 기준값:</span>
+                <input type="number" id="hunter-base-input" placeholder="현재 수치 (예: 100)" 
+                       style="flex: 1; padding: 3px 5px; font-weight: bold; font-size: 11px; border: 1px inset #888;"
+                       onkeydown="if(event.key === 'Enter') Harness.startDeltaHunting(this.value)">
+                <button class="btn-classic btn-flash-primary" style="font-weight: bold;" onclick="Harness.startDeltaHunting(document.getElementById('hunter-base-input').value)">
+                  🎯 추적 시작
+                </button>
+                <button class="btn-classic" onclick="Harness.resetDeltaHunter()">리셋</button>
+              </div>
+
+              <!-- Step 2: Next Pruning -->
+              <div style="margin-top: 5px; display: flex; gap: 4px; align-items: center;">
+                <span style="font-weight: bold; color: #C2185B; font-size: 10px; width: 48px;">2. 변경값:</span>
+                <input type="number" id="hunter-next-input" placeholder="맞은 후 수치 (예: 85)" 
+                       style="flex: 1; padding: 3px 5px; font-size: 11px; border: 1px inset #888;"
+                       onkeydown="if(event.key === 'Enter') Harness.pruneByNextValue(this.value)">
+                <button class="btn-classic" style="font-weight: bold;" onclick="Harness.pruneByNextValue(document.getElementById('hunter-next-input').value)">
+                  🔍 99.9% 소거
+                </button>
+              </div>
+
+              <!-- Live Surveillance Status Badge -->
+              <div id="hunter-status-msg" style="margin-top: 6px; padding: 3px 6px; background: #ECE9D8; border: 1px inset #fff; font-size: 10px; color: #333; line-height: 1.3;">
+                대기 중. 현재 수치(100)를 입력하고 [🎯 추적 시작]을 누르세요.
+              </div>
+
+              <!-- Dynamic Results Table (Expanded to 400px+ height!) -->
+              <div class="var-table-container" style="flex: 1; min-height: 400px; max-height: 580px; margin-top: 5px;">
+                <table class="var-table">
+                  <thead>
+                    <tr>
+                      <th>WASM 힙 주소</th>
+                      <th>실시간 값</th>
+                      <th>원클릭 치트</th>
+                      <th title="WASM 힙 메모리 영구 고정">무한</th>
+                    </tr>
+                  </thead>
+                  <tbody id="delta-hunter-tbody">
+                    <tr><td colspan="4" style="text-align:center; color:#888;">[추적 시작] 후 게임 수치가 변하면 맨 위에 뜹니다!</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- [Sub-Segment 2] Classic Precision Value Scanner Panel -->
+          <div class="sub-segment-panel" id="subseg-panel-scanner" style="display: none;">
+            <div class="group-box" style="flex: 1; display: flex; flex-direction: column;">
+              <div class="group-title">⚙️ 클래식 정밀 스캐너 (Value Scanner & 미지수 스캔)</div>
+              <div style="display: flex; gap: 4px; margin-top: 4px; align-items: center;">
+                <input type="number" id="scan-val-input" placeholder="수치 입력 (빈칸은 미지수 스캔)" style="flex: 1; padding: 2px 4px; border: 1px inset #888;">
+                <button class="btn-classic btn-flash-primary" style="font-weight:bold;" onclick="Harness.runFirstScan(document.getElementById('scan-val-input').value)">1차 스캔</button>
+                <button class="btn-classic" onclick="Harness.resetScanner()">리셋</button>
+              </div>
+              <div style="display: flex; gap: 4px; margin-top: 4px; align-items: center;">
+                <select id="scan-type-select" style="flex: 1; padding: 1px; font-size: 10px;">
+                  <option value="unchanged">변하지 않음 (Unchanged - 노이즈 소거)</option>
+                  <option value="decreased">감소한 값 (Decreased - 소모/피격)</option>
+                  <option value="increased">증가한 값 (Increased - 획득/회복)</option>
+                  <option value="changed">변한 값 (Changed)</option>
+                  <option value="exact">정확히 일치하는 값 (Exact)</option>
+                </select>
+                <button class="btn-classic" style="font-weight:bold;" onclick="Harness.runNextScan(document.getElementById('scan-type-select').value, document.getElementById('scan-val-input').value)">차기 스캔</button>
+              </div>
+              <!-- Dynamic Results Table (Expanded to 400px+ height!) -->
+              <div class="var-table-container" style="flex: 1; min-height: 400px; max-height: 580px; margin-top: 4px;">
+                <table class="var-table">
+                  <thead>
+                    <tr>
+                      <th>주소</th>
+                      <th>실시간 값</th>
+                      <th>이전 값</th>
+                      <th>조작</th>
+                    </tr>
+                  </thead>
+                  <tbody id="scanner-tbody">
+                    <tr><td colspan="4" style="text-align:center; color:#888;">스캔 대기 중 (숫자 입력 또는 빈칸으로 [1차 스캔])</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- [TAB 2] 게임 제어 & 치트 (Telemetry + Cheat Records Table) -->
+        <div class="tab-page" id="page-cheats" style="display: none;">
+          <!-- Telemetry Group -->
+          <div class="group-box">
+            <div class="group-title">⏱️ 시간 왜곡 텔레메트리 (Telemetry)</div>
+            <table style="width: 100%; font-size: 10.5px; line-height: 1.6;">
+              <tr>
+                <td>가상 게임 시간 (V-Time):</td>
+                <td style="text-align: right; font-weight: bold; color: #0A246A;" id="metric-vtime">0.00s</td>
+              </tr>
+              <tr>
+                <td>실제 경과 시간 (R-Time):</td>
+                <td style="text-align: right; color: #555;" id="metric-rtime">0.00s</td>
+              </tr>
+              <tr>
+                <td>시간 왜곡 배율 (Scale):</td>
+                <td style="text-align: right; font-weight: bold; color: #EE3124;" id="metric-scale">1.00x</td>
+              </tr>
+              <tr>
+                <td>엔진 주사율 (FPS):</td>
+                <td style="text-align: right; font-weight: bold; color: #008800;" id="metric-fps">60 FPS</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Cheat Memory Table & Active Cheat Book -->
+          <div class="group-box" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="group-title" style="display: flex; justify-content: space-between; width: 92%;">
+              <span>📋 치트 메모리 조작 북 (Cheat Table)</span>
+              <span style="cursor: pointer; color: #0A246A; text-decoration: underline;" onclick="Harness.promptAddCustomCheatRecord()">+ 주소 수동 등록</span>
+            </div>
+            <div style="font-size: 10px; color: #555; margin: 4px 0 2px 0;">
+              메모리 검색기에서 편집된 모든 수치가 게임별로 자동 기록되며, 수치 수정/고정(Freeze)/이름 변경이 가능합니다.
+            </div>
+            <div class="var-table-container" style="flex: 1; min-height: 340px; max-height: 560px; margin-top: 4px;">
+              <table class="var-table">
+                <thead>
+                  <tr>
+                    <th>게임 / 치트 이름</th>
+                    <th>메모리 주소</th>
+                    <th>실시간 수치</th>
+                    <th>조작</th>
+                    <th title="수치 무한 고정">고정</th>
+                    <th>삭제</th>
+                  </tr>
+                </thead>
+                <tbody id="cheat-records-tbody">
+                  <tr><td colspan="6" style="text-align:center; color:#888;">아직 편집된 수치가 없습니다. [🔍 메모리 검색기]에서 수치를 수정하면 여기에 자동 등록됩니다!</td></tr>
+                </tbody>
+                <!-- Hidden compat tbody for backward test compatibility -->
+                <tbody id="blackboard-tbody" style="display:none;"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- [TAB 3] 게임 정보 & 로그 (Console Logs + Engine Info + Shortcuts Guide) -->
+        <div class="tab-page" id="page-logs" style="display: none;">
+          <!-- Game & Engine Info -->
+          <div class="group-box">
+            <div class="group-title">ℹ️ 런타임 엔진 상태</div>
+            <table style="width: 100%; font-size: 10.5px; line-height: 1.6;">
+              <tr>
+                <td>플래시 에뮬레이터:</td>
+                <td style="text-align: right; font-weight: bold; color: #0A246A;">Ruffle WebAssembly</td>
+              </tr>
+              <tr>
+                <td>시간 왜곡 훅:</td>
+                <td style="text-align: right; color: #008800; font-weight: bold;">Active (Audio+RAF)</td>
+              </tr>
+              <tr>
+                <td>안티치트 무력화:</td>
+                <td style="text-align: right; color: #D32F2F; font-weight: bold;">confereNDS 패치 장착</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Activity & Hook Logs -->
+          <div class="group-box">
+            <div class="group-title">📜 하네스 로그 콘솔</div>
+            <div class="log-box" id="cheat-console-logs" style="height: 260px; min-height: 200px;"></div>
+          </div>
+
+          <!-- Shortcuts & Interaction Guide -->
+          <div class="group-box">
+            <div class="group-title">⌨️ 단축키 및 제스처 안내</div>
+            <div style="font-size: 10px; line-height: 1.6; color: #333;">
+              <div>• <b>게임 화면 우클릭</b>: 플래시 전용 우클릭 메뉴 (확대, 축소, 100%, 재생, 되감기 등)</div>
+              <div>• <b>F1</b>: 일시정지 / 게임 재개</div>
+              <div>• <b>F2 / F3</b>: 0.5x 슬로우모션 / 2.0x 고속 재생</div>
+              <div>• <b>F4</b>: 1프레임 미세 전진 (16.6ms 정밀 이동)</div>
+              <div>• <b>F5 / 0</b>: 1.0x 정상 배속 복귀</div>
+              <div>• <b>[ / ]</b>: 0.25x 단위 미세 배속 조절</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden compat hook for test contract (status bar removed per user request) -->
+  <span id="status-text" style="display:none;"></span>
+
+  <!-- Step 3: Core Cheat Controller -->
+  <script src="cheat_harness.js?v=2.2.0"></script>
+
+  <script>
+    // Initialize Harness on DOM Load
+    window.addEventListener('DOMContentLoaded', () => {
+      Harness.init();
+      setupDragAndDrop();
+      setupFKeyInterlock();
+    });
+
+    // File input handler
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) {
+        Harness.loadSwfFile(file);
+      }
+    }
+
+    // Drag & Drop Setup
+    function setupDragAndDrop() {
+      const viewport = document.getElementById('viewport-container');
+      const dropZone = document.getElementById('drop-zone');
+
+      viewport.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
+
+      viewport.addEventListener('dragleave', (e) => {
+        if (!viewport.contains(e.relatedTarget)) {
+          dropZone.classList.remove('drag-over');
+        }
+      });
+
+      viewport.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          const file = files[0];
+          if (file.name.toLowerCase().endsWith('.swf')) {
+            Harness.loadSwfFile(file);
+          } else {
+            alert('플래시 파일(.swf)만 로드할 수 있습니다.');
+          }
+        }
+      });
+    }
+
+    // F1 ~ F5 Function Key Interlock (Preserves game's Space/Arrow keys!)
+    function setupFKeyInterlock() {
+      window.addEventListener('keydown', (e) => {
+        switch (e.key) {
+          case 'F1':
+            e.preventDefault();
+            Harness.togglePause();
+            break;
+          case 'F2':
+            e.preventDefault();
+            Harness.setSpeed(0.5);
+            break;
+          case 'F3':
+            e.preventDefault();
+            Harness.setSpeed(2.0);
+            break;
+          case 'F4':
+            e.preventDefault();
+            Harness.stepFrame();
+            break;
+          case 'F5':
+            e.preventDefault();
+            Harness.setSpeed(1.0);
+            break;
+        }
+      }, true);
+    }
+  </script>
+</body>
+</html>
