@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>치트 플래시 (Cheat Flash) v1.0.0 - 플래시 치트 & 스피드핵 런타임</title>
+  <title>치트 플래시 (Cheat Flash) v1.0.0 - 플래시 치트 & 스피드 조절 플레이어</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" href="icon.png">
   
   <!-- Step 1: Virtual Clock Rig installed before Ruffle initialization -->
   <script src="virtual_clock.js"></script>
 
-  <!-- Step 2: Ruffle Official WebAssembly Engine -->
-  <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+  <!-- Step 2: Offline-First Ruffle WebAssembly Engine (Local Bundle with CDN Fallback) -->
+  <script src="ruffle/ruffle.js" onerror="console.warn('[Ruffle] Local bundle not found, using CDN fallback'); var s = document.createElement('script'); s.src = 'https://unpkg.com/@ruffle-rs/ruffle'; document.head.appendChild(s);"></script>
 
   <!-- Linked Retro Stylesheet with Cache Busting -->
   <link rel="stylesheet" href="style.css?v=2.2.0">
@@ -143,9 +145,15 @@
     
     <!-- Viewport Panel (Left/Center) -->
     <div class="viewport-panel" id="viewport-container">
-      <div class="viewport-header" id="viewport-header">
-        <span id="current-game-title">Macromedia Flash Player - [Built-in Retro Demo Mode]</span>
-        <div style="display: flex; gap: 6px; align-items: center;">
+      <div class="viewport-header" id="viewport-header" style="display: flex; align-items: center; justify-content: space-between;">
+        <span id="current-game-title" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">Macromedia Flash Player - [Built-in Retro Demo Mode]</span>
+        <!-- Multi-Game Slot Sessions -->
+        <div class="game-slot-bar" style="display: inline-flex; gap: 3px; align-items: center;">
+          <button class="btn-classic game-slot-btn active" id="slot-btn-0" onclick="Harness.switchGameSlot(0)" title="게임 세션 슬롯 1" style="padding: 1px 6px; font-size: 10px; font-weight: bold;">🎮 슬롯 1</button>
+          <button class="btn-classic game-slot-btn" id="slot-btn-1" onclick="Harness.switchGameSlot(1)" title="게임 세션 슬롯 2" style="padding: 1px 6px; font-size: 10px;">🎮 슬롯 2</button>
+          <button class="btn-classic game-slot-btn" id="slot-btn-2" onclick="Harness.switchGameSlot(2)" title="게임 세션 슬롯 3" style="padding: 1px 6px; font-size: 10px;">🎮 슬롯 3</button>
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center; margin-left: 6px;">
           <button class="btn-classic" id="btn-restore-toolbar" style="display:none; padding: 1px 5px; font-size: 10px; min-width: 22px; justify-content: center;" onclick="Harness.toggleToolbar(true)" title="상단 툴바 펼치기">▼</button>
           <span id="game-status-badge" class="status-badge">Demo Active</span>
         </div>
@@ -312,12 +320,17 @@
 
           <!-- Cheat Memory Table & Active Cheat Book -->
           <div class="group-box" style="flex: 1; display: flex; flex-direction: column;">
-            <div class="group-title" style="display: flex; justify-content: space-between; width: 92%;">
+            <div class="group-title" style="display: flex; justify-content: space-between; align-items: center; width: 95%;">
               <span>📋 치트 메모리 조작 북 (Cheat Table)</span>
-              <span style="cursor: pointer; color: #0A246A; text-decoration: underline;" onclick="Harness.promptAddCustomCheatRecord()">+ 주소 수동 등록</span>
+              <div style="display: flex; gap: 8px; font-size: 10px;">
+                <span style="cursor: pointer; color: #0A246A; text-decoration: underline;" onclick="Harness.exportCheatTable()" title="치트 테이블을 JSON 파일로 내보냅니다">💾 내보내기</span>
+                <span style="cursor: pointer; color: #0A246A; text-decoration: underline;" onclick="document.getElementById('cheat-file-input').click()" title="치트 JSON 파일을 불러옵니다">📂 불러오기</span>
+                <span style="cursor: pointer; color: #0A246A; text-decoration: underline;" onclick="Harness.promptAddCustomCheatRecord()">+ 주소 등록</span>
+              </div>
             </div>
+            <input type="file" id="cheat-file-input" accept=".json" style="display: none;" onchange="Harness.importCheatTableFile(event)">
             <div style="font-size: 10px; color: #555; margin: 4px 0 2px 0;">
-              메모리 검색기에서 편집된 모든 수치가 게임별로 자동 기록되며, 수치 수정/고정(Freeze)/이름 변경이 가능합니다.
+              메모리 검색기에서 편집된 모든 수치가 게임별로 자동 기록되며, 수치 수정/고정(Freeze)/이름 변경/내보내기가 가능합니다.
             </div>
             <div class="var-table-container" style="flex: 1; min-height: 340px; max-height: 560px; margin-top: 4px;">
               <table class="var-table">

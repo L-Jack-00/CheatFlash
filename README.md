@@ -1,10 +1,14 @@
+<p align="center">
+  <img src="icon.png" width="128" height="128" alt="Cheat Flash Icon">
+</p>
+
 # ⚡ 치트 플래시 (Cheat Flash) v1.0.0
 ### Universal Flash Player & Retro Speed/Cheat Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/L-Jack-00/CheatFlash)
-[![Tests: Passing](https://img.shields.io/badge/tests-61%20passed-brightgreen.svg)](tests)
+[![Tests: Passing](https://img.shields.io/badge/tests-65%20passed-brightgreen.svg)](tests)
 
 > **2000년대 어도비/매크로미디어 플래시 플레이어의 감성을 현대적인 WebAssembly(WASM) 및 시간 왜곡 엔진으로 재탄생시킨 범용 플래시 플레이어 & 치트 플랫폼입니다.**
 
@@ -25,24 +29,31 @@
 - **다양한 필터링**: 증가한 값(Increased), 감소한 값(Decreased), 변하지 않은 값(Unchanged), 변한 값(Changed) 필터링 완비.
 - **원클릭 서브 세그먼트 전환**: 상단 토글 스위치(`[🎯 간편 델타 헌터]` | `[⚙️ 클래식 정밀 스캐너]`)로 원하는 도구를 언제든 즉시 전환.
 
-### 3. 📋 치트 메모리 조작 북 (Tab 2)
+### 3. 📋 치트 메모리 조작 북 & 파일 입출력 (Tab 2)
 - **자동 누적 기록**: 메모리 검색기에서 편집된 모든 수치가 최신순으로 자동 등록 및 누적 보존.
 - **수치 수정 & 영구 고정(Freeze)**: 실시간 수치 인라인 수정 및 백그라운드 무한 고정 유지.
-- **주소 수동 등록**: 알고 있는 메모리 주소를 직접 수동 등록하여 관리 가능.
+- **치트 프리셋 내보내기/불러오기 (.json)**: 찾은 치트 목록을 JSON 파일로 저장(`[💾 내보내기]`)하고 언제든 다시 불러오기(`[📂 불러오기]`) 가능.
 
-### 4. ⏱️ 만능 시간 왜곡 (Speedhack Engine)
+### 4. 🎮 다중 게임 세션 슬롯 (3 Multi-Game Slots)
+- 상단 **`[🎮 슬롯 1]` `[🎮 슬롯 2]` `[🎮 슬롯 3]`** 탭으로 여러 게임을 동시 관리.
+- 슬롯별로 독립된 게임 데이터, 시간 배속, 치트 북을 유지하여 게임 간 즉각적인 전환 지원.
+
+### 5. 📦 100% 오프라인 Ruffle WASM 번들링
+- 인터넷 연결이 없는 오프라인 환경에서도 내장 `ruffle/` 로컬 에셋을 통해 플래시 게임 즉시 구동 (CDN 자동 대체 가드 탑재).
+
+### 6. ⏱️ 만능 시간 왜곡 (Speedhack Engine)
 - **0.1x ~ 10.0x 자유로운 가속/감속**: 슬로우모션 탄막 회피부터 지루한 파밍 구간 10배속 돌파까지 실시간 슬라이더 및 단축키 조절.
 - **0% CPU 완전 일시정지 (F1)**: 게임 렌더링과 물리 연산을 물리적으로 동결하여 CPU 사용률을 0%로 절감.
 - **1프레임 미세 전진 (F4)**: 정확히 1프레임(+16.6ms)만 물리 연산을 진행하고 즉시 재동결하여 초정밀 프레임 단위 조작 가능.
 
-### 5. 🎵 Web Audio API 사운드 피치 & 동결 싱크
+### 7. 🎵 Web Audio API 사운드 피치 & 동결 싱크
 - 게임 배속에 맞춰 BGM 및 효과음 재생 속도가 자연스럽게 동기화.
 - 일시정지(F1) 시 오디오를 즉시 정지하여 소리 겹침이나 지연 드리프트를 차단.
 
-### 6. 🛡️ 플래시 안티치트 자동 무력화 (Anti-Cheat Disarmer)
+### 8. 🛡️ 플래시 안티치트 자동 무력화 (Anti-Cheat Disarmer)
 - SWF 파일 로드 시 바이트코드를 분석하여 `confereNDS` 등 유명 플래시 안티치트 검증 함수를 자동 감지하고 원클릭/자동 무력화 패치 적용.
 
-### 7. 🗗 독립 윈도우 인스펙터 분리 (Undock & Multi-Monitor)
+### 9. 🗗 독립 윈도우 인스펙터 분리 (Undock & Multi-Monitor)
 - 우측 치트 인스펙터 패널을 완전히 독립된 네이티브 윈도우 창으로 분리하여 듀얼/트리플 모니터로 이동 가능.
 - 창 위치 및 크기(Geometry) 자동 기억 및 복원.
 - 메인 화면으로 언제든 원클릭 재도킹 지원.

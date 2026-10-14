@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>치트 플래시 - 치트 및 변수 인스펙터</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" href="icon.png">
   <link rel="stylesheet" href="style.css?v=2.2.0">
   <style>
     body {
@@ -169,12 +171,17 @@
 
         <!-- Cheat Memory Table & Active Cheat Book -->
         <div class="group-box" style="flex: 1; display: flex; flex-direction: column;">
-          <div class="group-title" style="display: flex; justify-content: space-between; width: 92%;">
+          <div class="group-title" style="display: flex; justify-content: space-between; align-items: center; width: 95%;">
             <span>📋 치트 메모리 조작 북 (Cheat Table)</span>
-            <span style="cursor: pointer; color: #0A246A; text-decoration: underline;" onclick="delegateCall('promptAddCustomCheatRecord')">+ 주소 수동 등록</span>
+            <div style="display: flex; gap: 8px; font-size: 10px;">
+              <span style="cursor: pointer; color: #0A246A; text-decoration: underline;" onclick="delegateCall('exportCheatTable')" title="치트 테이블을 JSON 파일로 내보냅니다">💾 내보내기</span>
+              <span style="cursor: pointer; color: #0A246A; text-decoration: underline;" onclick="document.getElementById('cheat-file-input').click()" title="치트 JSON 파일을 불러옵니다">📂 불러오기</span>
+              <span style="cursor: pointer; color: #0A246A; text-decoration: underline;" onclick="delegateCall('promptAddCustomCheatRecord')">+ 주소 등록</span>
+            </div>
           </div>
+          <input type="file" id="cheat-file-input" accept=".json" style="display: none;" onchange="handleInspectorCheatFileSelect(event)">
           <div style="font-size: 10px; color: #555; margin: 4px 0 2px 0;">
-            메모리 검색기에서 편집된 모든 수치가 게임별로 자동 기록되며, 수치 수정/고정(Freeze)/이름 변경이 가능합니다.
+            메모리 검색기에서 편집된 모든 수치가 게임별로 자동 기록되며, 수치 수정/고정(Freeze)/이름 변경/내보내기가 가능합니다.
           </div>
           <div class="var-table-container" style="flex: 1; min-height: 340px; max-height: 560px; margin-top: 4px;">
             <table class="var-table">
@@ -286,6 +293,22 @@
       });
       const h = getOpenerHarness();
       if (h) h.activeTab = tabName;
+    }
+
+    function handleInspectorCheatFileSelect(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          delegateCall('importCheatTableData', parsed);
+        } catch (err) {
+          alert('치트 테이블 JSON 파싱 실패: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
     }
 
     function dockBack() {

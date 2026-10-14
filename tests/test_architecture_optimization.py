@@ -122,6 +122,45 @@ class TestArchitectureOptimization(unittest.TestCase):
                 f"Missing stderr UTF-8 safety net in {py_path.name}"
             )
 
+    def test_offline_ruffle_bundle_and_loader(self):
+        """Ruffle WASM package must be bundled locally and index.html must load it offline-first."""
+        ruffle_dir = PROJECT_DIR / "ruffle"
+        self.assertTrue(ruffle_dir.exists(), "ruffle/ directory must exist")
+        self.assertTrue((ruffle_dir / "ruffle.js").exists(), "ruffle/ruffle.js must exist")
+        wasm_files = list(ruffle_dir.glob("*.wasm"))
+        self.assertGreaterEqual(len(wasm_files), 1, "At least one .wasm file must exist in ruffle/")
+        self.assertIn("ruffle/ruffle.js", self.html)
+        self.assertIn("unpkg.com/@ruffle-rs/ruffle", self.html)
+
+    def test_multi_slot_game_sessions(self):
+        """Multi-game slot session manager must be present in DOM and JS."""
+        self.assertIn("slot-btn-0", self.html)
+        self.assertIn("slot-btn-1", self.html)
+        self.assertIn("slot-btn-2", self.html)
+        self.assertIn("switchGameSlot", self.html)
+        self.assertIn("this.gameSlots =", self.js)
+        self.assertIn("switchGameSlot(slotIdx)", self.js)
+        self.assertIn("_updateGameSlotButtons()", self.js)
+
+    def test_cheat_table_json_export_import(self):
+        """Cheat Table must support JSON export and import across both windows."""
+        inspector_html = (PROJECT_DIR / "inspector.html").read_text(encoding="utf-8")
+        self.assertIn("exportCheatTable()", self.html)
+        self.assertIn("importCheatTableFile", self.html)
+        self.assertIn("exportCheatTable", inspector_html)
+        self.assertIn("exportCheatTable()", self.js)
+        self.assertIn("importCheatTableData(jsonObj)", self.js)
+        self.assertIn("importCheatTableFile(event)", self.js)
+
+    def test_brand_icon_assets(self):
+        """Cheese lightning bolt icon assets must exist and be bound to app and windows."""
+        self.assertTrue((PROJECT_DIR / "icon.png").exists(), "icon.png must exist")
+        self.assertTrue((PROJECT_DIR / "icon.ico").exists(), "icon.ico must exist")
+        self.assertTrue((PROJECT_DIR / "favicon.ico").exists(), "favicon.ico must exist")
+        self.assertIn("favicon.ico", self.html)
+        self.assertIn("icon.png", self.html)
+        self.assertIn("setWindowIcon", self.main_py)
+
 
 if __name__ == "__main__":
     unittest.main()

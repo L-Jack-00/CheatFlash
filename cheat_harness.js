@@ -67,6 +67,14 @@
       this.inspectorWindow = null;
       this._inspectorMoved = false;
 
+      // Multi-Game Slot Sessions (3 Independent Slots)
+      this.currentSlot = 0;
+      this.gameSlots = [
+        { id: 0, title: '데모 플래시 (Demo)', isSandbox: true, records: [], file: null, arrayBuffer: null },
+        { id: 1, title: '빈 슬롯 (Empty)', isSandbox: false, records: [], file: null, arrayBuffer: null },
+        { id: 2, title: '빈 슬롯 (Empty)', isSandbox: false, records: [], file: null, arrayBuffer: null }
+      ];
+
       // Flash Player Authentic Features
       this.zoomLevel = 1.0;
       this.flashQuality = 'high';
@@ -207,6 +215,16 @@
         this.state = STATES.FLASH_LOADED;
         this.currentGameTitle = file.name;
         this.log(`[RuffleRig] Successfully loaded "${file.name}" into virtualized AVM sandbox!`);
+
+        this.gameSlots[this.currentSlot] = {
+          id: this.currentSlot,
+          title: file.name,
+          isSandbox: false,
+          records: [...this.cheatRecords],
+          file: file,
+          arrayBuffer: arrayBuffer
+        };
+        this._updateGameSlotButtons();
 
         const titles = this._getAllDOMElements('current-game-title');
         titles.forEach(el => el.textContent = file.name);
@@ -888,6 +906,137 @@
 
       this.quickSetHunterVal(key, val);
       this.addOrUpdateCheatRecord(key, val, name);
+    }
+
+    /* -------------------------------------------------------------
+     * Multi-Game Slot Session Management
+     * ------------------------------------------------------------- */
+    _updateGameSlotButtons() {
+      for (let i = 0; i < 3; i++) {
+        const btn = document.getElementById(`slot-btn-${i}`);
+        if (btn) {
+          const slot = this.gameSlots[i];
+          btn.classList.toggle('active', i === this.currentSlot);
+          if (slot && slot.title && !slot.title.startsWith('빈 슬롯')) {
+            const shortName = slot.title.length > 7 ? slot.title.substring(0, 6) + '…' : slot.title;
+            btn.textContent = `🎮 ${shortName}`;
+            btn.title = `슬롯 ${i + 1}: ${slot.title}`;
+          } else {
+            btn.textContent = `🎮 슬롯 ${i + 1}`;
+            btn.title = `슬롯 ${i + 1}: 빈 슬롯`;
+          }
+        }
+      }
+    }
+
+    switchGameSlot(slotIdx) {
+      if (slotIdx === this.currentSlot) return;
+      // Save current slot state
+      const cur = this.gameSlots[this.currentSlot];
+      if (cur) {
+        cur.records = [...this.cheatRecords];
+        cur.title = this.currentGameTitle;
+        cur.isSandbox = this.sandboxActive;
+      }
+
+      this.currentSlot = slotIdx;
+      this._updateGameSlotButtons();
+
+      const target = this.gameSlots[slotIdx];
+      this.cheatRecords = target && target.records ? [...target.records] : [];
+      this._renderCheatRecords();
+
+      if (target && target.arrayBuffer) {
+        this._reloadSwfBuffer(target.file || { name: target.title }, target.arrayBuffer);
+      } else {
+        this.startSandboxDemo();
+      }
+      this.log(`[Slot] 게임 세션 전환: 슬롯 ${slotIdx + 1} (${this.currentGameTitle})`);
+    }
+
+    async _reloadSwfBuffer(file, arrayBuffer) {
+      this.stopSandboxDemo();
+      if (!this.rufflePlayer) {
+        const container = document.getElementById('player-viewport');
+        const ruffle = window.RufflePlayer.newest();
+        this.rufflePlayer = ruffle.createPlayer();
+        container.innerHTML = '';
+        container.appendChild(this.rufflePlayer);
+      }
+      await this.rufflePlayer.load({ data: arrayBuffer });
+      this.state = STATES.FLASH_LOADED;
+      this.currentGameTitle = file.name;
+      const titles = this._getAllDOMElements('current-game-title');
+      titles.forEach(el => el.textContent = file.name);
+      const badges = this._getAllDOMElements('game-status-badge');
+      badges.forEach(el => {
+        el.textContent = 'Flash (Ruffle) Active';
+        el.className = 'status-badge active';
+      });
+    }
+
+    /* -------------------------------------------------------------
+     * Cheat Table Export & Import (JSON Presets)
+     * ------------------------------------------------------------- */
+    exportCheatTable() {
+      const data = {
+        format: "CheatFlash-CheatTable",
+        version: "1.0.0",
+        exportedAt: new Date().toISOString(),
+        gameTitle: this.currentGameTitle,
+        records: this.cheatRecords
+      };
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const safeTitle = (this.currentGameTitle || "cheats").replace(/[^a-zA-Z0-9가-힣_-]/g, "_");
+      a.href = url;
+      a.download = `${safeTitle}_cheats.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      this.log(`[CheatTable] 치트 테이블 내보내기 완료: ${this.cheatRecords.length}개 항목 저장됨`);
+    }
+
+    importCheatTableData(jsonObj) {
+      if (!jsonObj || !Array.isArray(jsonObj.records)) {
+        alert("유효하지 않은 치트 테이블 JSON 파일 형식입니다.");
+        return;
+      }
+      let importedCount = 0;
+      for (const rec of jsonObj.records) {
+        if (!rec.key && !rec.id) continue;
+        const exists = this.cheatRecords.some(r => (r.targetId === rec.targetId && r.offset === rec.offset) || r.id === rec.id);
+        if (!exists) {
+          this.cheatRecords.unshift({
+            ...rec,
+            id: rec.id || `cheat-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            updatedAt: Date.now()
+          });
+          importedCount++;
+        }
+      }
+      this._renderCheatRecords();
+      this.log(`[CheatTable] 치트 테이블 불러오기 완료: ${importedCount}개 항목 등록됨`);
+      alert(`치트 테이블 불러오기 완료: 총 ${importedCount}개의 항목이 등록되었습니다.`);
+    }
+
+    importCheatTableFile(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          this.importCheatTableData(parsed);
+        } catch (err) {
+          alert("치트 테이블 JSON 파싱 실패: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
     }
 
     _renderBlackboardTable() {

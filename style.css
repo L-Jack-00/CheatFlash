@@ -549,3 +549,30 @@ body {
   flex: 1;
 }
 
+/* Multi-Game Slot Bar */
+.game-slot-bar {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  background: #D8D2BD;
+  padding: 1px 3px;
+  border: 1px inset #888888;
+  border-radius: 2px;
+}
+
+.game-slot-btn {
+  padding: 1px 6px;
+  font-size: 10px;
+  min-height: 20px;
+  background: linear-gradient(to bottom, #FFFFFF 0%, #ECE9D8 100%);
+  cursor: pointer;
+  border: 1px outset #FFFFFF;
+}
+
+.game-slot-btn.active {
+  background: linear-gradient(to bottom, #0A246A 0%, #1A44AA 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px inset #051A4D !important;
+  font-weight: bold;
+}
+

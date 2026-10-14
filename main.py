@@ -45,6 +45,12 @@ def run_desktop_app():
     window.resize(1200, 880)
     window.setMinimumSize(800, 650)
 
+    icon_file = base_dir / "icon.png"
+    if icon_file.exists():
+        app_icon = QIcon(str(icon_file))
+        app.setWindowIcon(app_icon)
+        window.setWindowIcon(app_icon)
+
     import server
 
     # Start local server daemon synchronously binding port for persistent IndexedDB / Flash SharedObject support
@@ -68,6 +74,8 @@ def run_desktop_app():
             popup_win.setWindowTitle("치트 플래시 - 치트 및 변수 인스펙터")
             popup_win.resize(450, 850)
             popup_win.setMinimumSize(380, 650)
+            if icon_file.exists():
+                popup_win.setWindowIcon(app_icon)
 
             # Blind Spot 2: Multi-Monitor Geometry Restoration
             settings = QSettings("CheatFlash", "InspectorWindow")
