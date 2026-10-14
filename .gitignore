@@ -12,6 +12,7 @@ dist/
 *.egg-info/
 *.egg
 *.spec
+*.zip
 
 # PyInstaller / Build artifacts
 _internal/
